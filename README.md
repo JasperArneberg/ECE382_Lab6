@@ -91,10 +91,11 @@ Each of the four motor driver voltage terminals were assigned pin numbers.
 
 ![alt text](https://github.com/JasperArneberg/ECE382_Lab6/blob/master/schematic.png?raw=true "Schematic")
 
-## Required 
+##Required Functionality: Robot Movement
+
+##A Functionality: Remote-Controlled Robot Movement
 
 ##Debugging
-
 
 ##Conclusion
 In conclusion,

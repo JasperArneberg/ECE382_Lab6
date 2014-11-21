@@ -182,6 +182,10 @@ The same delay scheme was used for turnRight(), and it worked fairly well.
 
 ##A Functionality: Remote-Controlled Robot Movement
 
+The A functionality was fairly straightforward to implement since Lab 5 had similar requirements. In fact, it took about 25 minutes to fully complete the remote-controlled robot movement.
+
+When testing the A functionality, it was very difficult to steer the robot. This was because the turnRight() and turnLeft() methods only worked at a duty cycle of 60%, which is relatively fast. An extra paramter, speed, was added into the turnRight() and turnLeft() methods. This allowed the robot to turn at different speeds, giving finer control.
+
 ##Debugging
 The MSP430 was not able to stay powered when the USB cable was disconnected. To investigate the error, the voltages of the board were measured. For some reason, the 5 V rail only had 0.5 V across it. After further analysis, an electrical error in the hardware was discovered. The 5 V output was traced along to a pin on th every left side of the board. Once this pin was connected to the 5 V rail, everything worked as expected.
 
@@ -215,8 +219,8 @@ void stopMoving() {
 
 
 ##Conclusion
-In conclusion, this laboratory exercise demonstrated one of the many applications of microcontrollers.
+In conclusion, this laboratory exercise demonstrated one of the many applications of microcontrollers. Pulse width modulation is fairly simple, but it is vitally important when dealing with electromechanical actuators such DC motors. It relies on precise timing, which is why it is necessary to know how timers function. This laboratory exercise has set a good baseline for skills and functionality that will be used in Lab 7 and Lab 8.
 
 ##Documentation
 I used http://www.tablesgenerator.com/markdown_tables to generate markdown tables efficiently.  
-C2C Evan Richter explained to me Dr. Coulston's strategy for driving the motors, only using two PWM signals total.
+C2C Evan Richter explained to me Dr. Coulston's strategy for driving the motors, only using a total of two PWM signals.

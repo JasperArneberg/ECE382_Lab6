@@ -16,17 +16,16 @@ int32	irPacket = 0;
 
 void main(void)
 {
+    initMSP430();							// get ready for interrupts triggered by IR
 
-    initMSP430();
-
-    P2DIR |= BIT1;							// P2.1 is left directional control
+    P2DIR |= BIT1;							// P2.1 is left reverse selector
     P2OUT &= ~BIT1;							// initialize output to 0, forward drive
 
     P2DIR |= BIT2;							// P2.2 is associated with TA1CCR1
     P2SEL |= BIT2;							// P2.2 is associated with TA1CCTL1
 
-    P2DIR |= BIT3;							//P2.3 is right directional control
-    P2OUT &= ~BIT3;
+    P2DIR |= BIT3;							// P2.3 is right reverse selector
+    P2OUT &= ~BIT3;							// initialize to 0, forward drive
 
     P2DIR |= BIT4;							// P2.4 is associated with TA1CCR2
     P2SEL |= BIT4;							// P2.4 is associated with TA1CCTL2
@@ -72,15 +71,15 @@ void main(void)
 			_disable_interrupt();			//disable while drawing
 
 			if (irPacket == UP) {
-				moveForward(60);
+				moveForward(60);			//forwards
 			} else if (irPacket == DOWN) {
-				moveBack(60);
+				moveBack(60);				//backwards
 			} else if (irPacket == RIGHT) {
-				turnRight(90,45);
+				turnRight(90,45);			//slow right turn
 			} else if (irPacket == LEFT) {
-				turnLeft(90,45);
+				turnLeft(90,45);			//slow left turn
 			} else if (irPacket == ENTER) {
-				stopMoving();
+				stopMoving();				//stop all motion
 			} else if (irPacket == ONE) {
 				moveForward(90);			//super fast mode
 			} else if (irPacket == TWO) {
@@ -124,6 +123,11 @@ void moveBack(int speed) {
 	TA1CCR2 = speed;
 }
 
+/**
+ * The turnLeft() method takes in two parameters, degrees and speed.
+ * This allows it to be used in a variety of applications. The degrees
+ * functionality is calibrated for a speed of 60.
+ */
 void turnLeft(int degrees, int speed) {
 	P2OUT |= BIT1;							//set left reverse select
 	TA1CCTL1 = OUTMOD_3;					//Set/Reset mode
@@ -140,6 +144,10 @@ void turnLeft(int degrees, int speed) {
 	}
 }
 
+/**
+ * The turnRight() method is calibrated for a speed of 60. A different
+ * speed may be specified in order to turn the robot slower.
+ */
 void turnRight(int degrees, int speed) {
 	P2OUT &= ~BIT1;							//clear left reverse select
 	TA1CCTL1 = OUTMOD_7;					//Reset/Set mode

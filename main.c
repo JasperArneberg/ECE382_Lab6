@@ -4,8 +4,9 @@
 /**
  * Name: C2C Jasper Arneberg
  * Date: 20 Nov 14
- * Description: This program drives a robot using pulse width modulation.
- * This is accomplished by utilizing Timer A.
+ * Description: This program drives a robot using pulse width modulation
+ * with Timer. The A functionality of this program allows the robot to
+ * be controlled by an infrared (IR) remote controller.
  */
 
 int8	newIrPacket = FALSE;
@@ -48,41 +49,47 @@ void main(void)
        	stopMoving();
        	__delay_cycles(1000000);
 
-    	turnRight(90);
+    	turnRight(90,60);
     	stopMoving();
     	__delay_cycles(1000000);
 
-    	turnRight(20);
+    	turnRight(20,60);
     	stopMoving();
     	__delay_cycles(1000000);
 
-    	turnLeft(90);
+    	turnLeft(90,60);
     	stopMoving();
     	__delay_cycles(1000000);
 
-    	turnLeft(20);
+    	turnLeft(20,60);
     	stopMoving();
     	__delay_cycles(1000000);
     	*/
 
     	//A Functonality
 		if (newIrPacket==TRUE) {
-			newIrPacket = FALSE;		//reset flag
-			_disable_interrupt();		//disable while drawing
+			newIrPacket = FALSE;			//reset flag
+			_disable_interrupt();			//disable while drawing
 
 			if (irPacket == UP) {
 				moveForward(60);
 			} else if (irPacket == DOWN) {
 				moveBack(60);
 			} else if (irPacket == RIGHT) {
-				turnRight(90);
+				turnRight(90,45);
 			} else if (irPacket == LEFT) {
-				turnLeft(90);
+				turnLeft(90,45);
 			} else if (irPacket == ENTER) {
 				stopMoving();
+			} else if (irPacket == ONE) {
+				moveForward(90);			//super fast mode
+			} else if (irPacket == TWO) {
+				turnRight(90,90); 			//rip 360's right
+			} else if (irPacket == THREE) {
+				turnLeft(90,90);			//rip 360's left
 			}
 
-			initMSP430();				//prepare for next interrupt
+			initMSP430();					//prepare for next interrupt
 		}
     } // end loop
 }
@@ -117,35 +124,35 @@ void moveBack(int speed) {
 	TA1CCR2 = speed;
 }
 
-void turnLeft(int degrees) {
+void turnLeft(int degrees, int speed) {
 	P2OUT |= BIT1;							//set left reverse select
 	TA1CCTL1 = OUTMOD_3;					//Set/Reset mode
-	TA1CCR1 = TURN_SPEED;
+	TA1CCR1 = speed;
 
 	P2OUT &= ~BIT3;							//clear right reverse select
 	TA1CCTL2 = OUTMOD_7;					//Reset/Set mode
-	TA1CCR2 = TURN_SPEED;
+	TA1CCR2 = speed;
 
 	__delay_cycles(200000);					//motor start-up delay
 	int i = 0;
 	for (i=0; i<degrees; i++) {
-		__delay_cycles(3300);				//3300 cycles per degree
+		__delay_cycles(3300);				//3300 cycles per degree when speed = 60
 	}
 }
 
-void turnRight(int degrees) {
+void turnRight(int degrees, int speed) {
 	P2OUT &= ~BIT1;							//clear left reverse select
 	TA1CCTL1 = OUTMOD_7;					//Reset/Set mode
-	TA1CCR1 = TURN_SPEED;
+	TA1CCR1 = speed;
 
 	P2OUT |= BIT3;							//set right reverse select
 	TA1CCTL2 = OUTMOD_3;					//Set/Reset mode
-	TA1CCR2 = TURN_SPEED;
+	TA1CCR2 = speed;
 
 	__delay_cycles(200000);					//motor start-up delay
 	int i = 0;
 	for (i=0; i<degrees; i++) {
-		__delay_cycles(3300);				//3300 cycles per degree
+		__delay_cycles(3300);				//3300 cycles per degree when speed = 60
 	}
 }
 
@@ -226,15 +233,9 @@ __interrupt void pinChange (void) {
 
 } // end pinChange ISR
 
-// -----------------------------------------------------------------------
-//			0 half-bit	1 half-bit		TIMER A COUNTS		TIMER A COUNTS
-//	Logic 0	xxx
-//	Logic 1
-//	Start
-//	End
-//
-// -----------------------------------------------------------------------
-
+/**
+ * Timer A interrupt vector.
+ */
 #pragma vector = TIMER0_A1_VECTOR			// This is from the MSP430G2553.h file
 __interrupt void timerOverflow (void) {
 	TACTL &= ~TAIE;							//disable Timer A interrupt

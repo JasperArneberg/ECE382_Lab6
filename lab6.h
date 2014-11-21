@@ -3,7 +3,8 @@
   * Author: C2C Jasper Arneberg
   * Created: 21 November 2014
   * Description: This header file defines all data structures and
-  * constants for use in the main.c file.
+  * constants for use in the main.c file. This header file also
+  * enables functionality with the IR sensor.
 *******************************************/
 
 typedef		unsigned char		int8;

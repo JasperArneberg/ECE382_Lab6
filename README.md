@@ -93,9 +93,64 @@ Each of the four motor driver voltage terminals were assigned pin numbers.
 
 ##Required Functionality: Robot Movement
 
+Here is the function for turnLeft():
+```
+void turnLeft(int degrees) {
+	P2OUT |= BIT1;							//set left reverse select
+	TA1CCTL1 = OUTMOD_3;					//Set/Reset mode
+	TA1CCR1 = TURN_SPEED;
+
+	P2OUT &= ~BIT3;							//clear right reverse select
+	TA1CCTL2 = OUTMOD_7;					//Reset/Set mode
+	TA1CCR2 = TURN_SPEED;
+
+	__delay_cycles(150000);
+	int i = 0;
+	for (i=0; i<degrees; i++) {
+		__delay_cycles(3300);
+	}
+}
+```
+
+The timing was the trickiest part of this functionality. The number of clock cycles per degree of revolution, approximately 3400, was determined by timing the robot as it spun continuously. The robot made 10 complete revolutions in 11.8 seconds, meaning each revolution of 360 degrees was 1.18 seconds. The clock speed is approximately 1 MHz, or 1,000,000 cycles per second. 1.18 sec/rev * (1 rev / 360 deg) * 1,000,000 cycles/sec = 3300 cycles/deg, rounded to two decimal places.
+
+It was also determined that there was a start-up time associated with turning. The motors take time to get to full speed. By experimentation, a start-up time of 150,000 cycles was determined.
+
+The same delay scheme was used for turnRight(), and it worked fairly well.
+
 ##A Functionality: Remote-Controlled Robot Movement
 
 ##Debugging
+The MSP430 was not able to stay powered when the USB cable was disconnected. To investigate the error, the voltages of the board were measured. For some reason, the 5 V rail only had 0.5 V across it. After further analysis, an electrical error in the hardware was discovered. The 5 V output was traced along to a pin on th every left side of the board. Once this pin was connected to the 5 V rail, everything worked as expected.
+
+The wheels always spun as expected when the MSP430 was plugged directly into the computer. When the MSP430 was disconnected from the computer, however, errors often occurred. After some probing, it appeared that the chip was being reset. This was likely due to the noise of the motors. This was fixed by putting a capacitor between the reset pin and ground.
+
+When attempting to drive the robot backwards, the motors exerted very little torque. This led to hardly any movement of the robot even though the wheels would spin when off the ground. To investigate the error, the voltage levels were observed. When the robot moved forward, the voltage across the 5 V rail stayed at a consistent 4.92 V. However, when the robot wheels moved backward, the voltage dropped to nearly 4.6 V. To fix this problem, a capactior was added across the 12 V rail. This allowed the motors to draw power when they needed it. After this was implemented, the voltage across the 5 V rail was consistently 4.92 V the entire time, and the torque of the motor increased greatly.
+
+The following code worked at first. However, when stopMoving() was called after moveBack(), the wheels did not stop moving.
+```
+void stopMoving() {
+	TA1CCTL1 = OUTMOD_7;					//Reset/Set mode
+	TA1CCR1 = 0;
+
+	TA1CCTL2 = OUTMOD_7;					//Reset/Set mode
+	TA1CCR2 = 0;
+}
+```
+
+This error was fixed by clearing the reverse select pins. Essentially, this turned stopMoving() into the moveForward() subroutine with a speed of 0.
+```
+void stopMoving() {
+	P2OUT &= ~BIT1;							//clear left reverse select
+	TA1CCTL1 = OUTMOD_7;					//Reset/Set mode
+	TA1CCR1 = 0;
+
+	P2OUT &= ~BIT3;							//clear right reverse select
+	TA1CCTL2 = OUTMOD_7;					//Reset/Set mode
+	TA1CCR2 = 0;
+}
+```
+
 
 ##Conclusion
 In conclusion,

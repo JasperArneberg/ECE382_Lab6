@@ -6,7 +6,6 @@
   * constants for use in the main.c file.
 *******************************************/
 
-
 typedef		unsigned char		int8;
 typedef		unsigned short		int16;
 typedef		unsigned long		int32;
@@ -15,6 +14,7 @@ typedef		unsigned long long	int64;
 #define		TRUE				1
 #define		FALSE				0
 
+//constants for robot movement
 #define PERIOD 100;
 #define TURN_SPEED 60;
 #define MAX_SPEED 90;

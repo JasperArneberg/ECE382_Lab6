@@ -1,5 +1,6 @@
 #include <msp430.h>
 #define PERIOD 100;
+#define TURN_SPEED 60;
 
 /**
  * Name: C2C Jasper Arneberg
@@ -26,32 +27,52 @@ void main(void)
     P2SEL |= BIT4;							// P2.4 is associated with TA1CCTL2
 
 	TA1CTL = ID_3 | TASSEL_2 | MC_1;		// Use 1:8 presclar off MCLK
-    TA1CCR0 = PERIOD;							// set signal period for PWM
+    TA1CCR0 = PERIOD;						// set signal period for PWM
+    TA1CCR0 = 100;
 
     while (1) {
-        //__delay_cycles(1000000);
-       	//stopMoving();
-    	__delay_cycles(1000000);
-    	moveForward(20);
+    	/**
+        __delay_cycles(1000000);
+       	stopMoving();
     	__delay_cycles(1000000);
     	moveForward(60);
-    	__delay_cycles(1000000);
-    	moveBack(20);
+        __delay_cycles(1000000);
+       	stopMoving();
     	__delay_cycles(1000000);
     	moveBack(60);
+    	*/
+
+    	//turnLeft(90);
+    	//stopMoving();
+    	//__delay_cycles(1000000);
+    	__delay_cycles(1000000);
+    	turnLeft(180);
+    	stopMoving();
+    	__delay_cycles(1000000);
+
+    	turnLeft(90);
+    	stopMoving();
+    	__delay_cycles(1000000);
+
+    	turnLeft(20);
+    	stopMoving();
+    	__delay_cycles(1000000);
 
 
     } // end loop
 }
 
 void stopMoving() {
-	TA1CCTL1 = OUTMOD_7;
+	P2OUT &= ~BIT1;							//clear left reverse select
+	TA1CCTL1 = OUTMOD_7;					//Reset/Set mode
 	TA1CCR1 = 0;
-	TA1CCTL2 = OUTMOD_7;
+
+	P2OUT &= ~BIT3;							//clear right reverse select
+	TA1CCTL2 = OUTMOD_7;					//Reset/Set mode
 	TA1CCR2 = 0;
 }
 
-void moveForward(char speed) {
+void moveForward(int speed) {
 	P2OUT &= ~BIT1;							//clear left reverse select
 	TA1CCTL1 = OUTMOD_7;					//Reset/Set mode
 	TA1CCR1 = speed;
@@ -61,7 +82,7 @@ void moveForward(char speed) {
 	TA1CCR2 = speed;
 }
 
-void moveBack(char speed) {
+void moveBack(int speed) {
 	P2OUT |= BIT1;							//set left reverse select
 	TA1CCTL1 = OUTMOD_3;					//Set/Reset mode
 	TA1CCR1 = speed;
@@ -69,4 +90,22 @@ void moveBack(char speed) {
 	P2OUT |= BIT3;							//set right reverse select
 	TA1CCTL2 = OUTMOD_3;					//Set/Reset mode
 	TA1CCR2 = speed;
+}
+
+void turnLeft(int degrees) {
+	P2OUT |= BIT1;							//set left reverse select
+	TA1CCTL1 = OUTMOD_3;					//Set/Reset mode
+	TA1CCR1 = TURN_SPEED;
+
+	P2OUT &= ~BIT3;							//clear right reverse select
+	TA1CCTL2 = OUTMOD_7;					//Reset/Set mode
+	TA1CCR2 = TURN_SPEED;
+
+	__delay_cycles(150000);
+	int i = 0;
+	for (i=0; i<degrees; i++) {
+		__delay_cycles(3400);
+	}
+
+
 }

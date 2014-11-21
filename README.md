@@ -25,7 +25,7 @@ Pulse Width Modulation creates an average voltage signal. In order to provide en
 It is very important that the positive and negative signal for a given motor are never on at the same time. This will create a short circuit and could lead to circuitry damage. It is also important to not change the direction of the motor too abruptly. For this reason, every command to the robot begins with a delay after turning off all the voltage.
 
 ####Pseudocode
-The following pseudocode was developed to help structure the code early on.
+The following pseudocode was developed to help structure the code early on. 
 ```
 #define MAX_RIGHT 60
 #define MAX_LEFT 60
@@ -83,17 +83,79 @@ Each of the four motor driver voltage terminals were assigned pin numbers.
 
 | Function           | Motor Driver Pin | MSP430 Pin |
 |--------------------|------------------|------------|
-| Left Positive PWM  | 1A               | P2.0       |
-| Left Negative PWM  | 2A               | P2.1       |
-| Right Positive PWM | 3A               | P2.2       |
-| Right Negative PWM | 4A               | P2.3       |
+| Left PWM	     | 1A               | P2.2       |
+| Left Reverse Control  | 2A               | P2.1       |
+| Right PWM          | 3A               | P2.4       |
+| Right Reverse Control | 4A               | P2.3       |
 | IR Sensor          | N/A              | Xin        |
 
 ![alt text](https://github.com/JasperArneberg/ECE382_Lab6/blob/master/schematic.png?raw=true "Schematic")
 
 ##Required Functionality: Robot Movement
 
-Here is the function for turnLeft():
+Here was the setup for the PWM to drive the motors, built off Dr. Coulston's lab6.c code on his website.
+```
+    WDTCTL = WDTPW|WDTHOLD;                 // stop the watchdog timer
+
+    P2DIR |= BIT1;							// P2.1 is left directional control
+    P2OUT &= ~BIT1;							// initialize output to 0, forward drive
+
+    P2DIR |= BIT2;							// P2.2 is associated with TA1CCR1
+    P2SEL |= BIT2;							// P2.2 is associated with TA1CCTL1
+
+    P2DIR |= BIT3;							//P2.3 is right directional control
+    P2OUT &= ~BIT3;
+
+    P2DIR |= BIT4;							// P2.4 is associated with TA1CCR2
+    P2SEL |= BIT4;							// P2.4 is associated with TA1CCTL2
+
+    TA1CTL = ID_3 | TASSEL_2 | MC_1;					// Use 1:8 presclar off MCLK
+    TA1CCR0 = PERIOD;							// set signal period for PWM
+    TA1CCR0 = 100;
+```
+
+A function named moveForward() was created to set the robot in forward motion:
+```
+void moveForward(int speed) {
+	P2OUT &= ~BIT1;						//clear left reverse select
+	TA1CCTL1 = OUTMOD_7;					//Reset/Set mode
+	TA1CCR1 = speed;
+
+	P2OUT &= ~BIT3;						//clear right reverse select
+	TA1CCTL2 = OUTMOD_7;					//Reset/Set mode
+	TA1CCR2 = speed;
+}
+```
+
+This function uses the Reset/Set mode in order to have the duty cycle equal to the speed parameter.
+
+The moveBack() method was constructed to allow the robot to move backwards at a desired speed:
+```
+void moveBack(int speed) {
+	P2OUT |= BIT1;						//set left reverse select
+	TA1CCTL1 = OUTMOD_3;					//Set/Reset mode
+	TA1CCR1 = speed;
+
+	P2OUT |= BIT3;						//set right reverse select
+	TA1CCTL2 = OUTMOD_3;					//Set/Reset mode
+	TA1CCR2 = speed;
+}
+```
+
+In this method, the Set/Reset mode is utilized. The reverse select is set high for both the left and right motor.
+
+The maximum speed of the robot is limited by the stall current, which should never exceed 1 A. The stall current was tested at different duty cycles as can be seen in the table below:
+
+| Duty Cycle | Stall Current |
+|------------|---------------|
+| 60%        | 0.62 A        |
+| 70%        | 0.68 A        |
+| 80%        | 0.78 A        |
+| 90%        | 0.96 A        |
+
+For the reason, the MAX_SPEED parameter was set to 90, representing a 90% duty cycle.
+
+Below is the function for turnLeft(). One wheel drives forward and the other drives backwards. The duty cycle is set to TURN_SPEED so that it is always consistent.
 ```
 void turnLeft(int degrees) {
 	P2OUT |= BIT1;							//set left reverse select
@@ -114,9 +176,9 @@ void turnLeft(int degrees) {
 
 The timing was the trickiest part of this functionality. The number of clock cycles per degree of revolution, approximately 3400, was determined by timing the robot as it spun continuously. The robot made 10 complete revolutions in 11.8 seconds, meaning each revolution of 360 degrees was 1.18 seconds. The clock speed is approximately 1 MHz, or 1,000,000 cycles per second. 1.18 sec/rev * (1 rev / 360 deg) * 1,000,000 cycles/sec = 3300 cycles/deg, rounded to two decimal places.
 
-It was also determined that there was a start-up time associated with turning. The motors take time to get to full speed. By experimentation, a start-up time of 150,000 cycles was determined.
+It was also determined that there was a start-up time associated with turning. The motors take time to get to full speed. By experimentation, a start-up time of 200,000 cycles was determined.
 
-The same delay scheme was used for turnRight(), and it worked fairly well.
+The same delay scheme was used for turnRight(), and it worked fairly well. 
 
 ##A Functionality: Remote-Controlled Robot Movement
 
@@ -153,7 +215,8 @@ void stopMoving() {
 
 
 ##Conclusion
-In conclusion,
+In conclusion, this laboratory exercise demonstrated one of the many applications of microcontrollers.
 
 ##Documentation
-I used http://www.tablesgenerator.com/markdown_tables to generate markdown tables efficiently. 
+I used http://www.tablesgenerator.com/markdown_tables to generate markdown tables efficiently.  
+C2C Evan Richter explained to me Dr. Coulston's strategy for driving the motors, only using two PWM signals total.
